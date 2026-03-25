@@ -1,214 +1,202 @@
-#  E-Commerce Conversion Funnel & Traffic Quality Analysis
+# E-Commerce Conversion Funnel & Traffic Quality Analysis
 
 ---
 
-##  Overview
+## Executive Summary
 
-This project analyzes user behavior across an e-commerce funnel to identify:
+An analysis of ~16K users from Google Analytics reveals a critical issue:
 
-* Conversion bottlenecks
-* Device-level friction
-* Traffic acquisition inefficiencies
+> **The business is not constrained by traffic — it is constrained by poor conversion efficiency.**
 
-Using real-world data from Google Analytics, the goal is to answer:
+* ~63% of users drop before checkout
+* Mobile users convert ~2× worse than desktop
+* Google drives traffic, but not revenue efficiently
 
-> **Where are users dropping off, why is it happening, and what actions will drive the highest revenue impact?**
+The largest growth opportunity lies in **conversion optimization, not acquisition**
 
 ---
 
-##  Dataset
+## Dataset
 
-* Source: **Google Analytics Sample Dataset (BigQuery Public Data)**
+* Source: Google Analytics Sample Dataset (BigQuery Public Data)
 * Table: `bigquery-public-data.google_analytics_sample.ga_sessions_*`
-* Time Period: Aug 2016 – Sep 2016
+* Time Range: Aug 2016 – Sep 2016
 * Data Size: ~675K event-level records
 
 ---
 
 ## Tech Stack
 
-* **SQL (BigQuery)** → Data extraction & transformation
-* **Power BI** → Dashboard visualization
-* **DAX** → KPI calculations
+* SQL (BigQuery) → Data modeling
+* Power BI → Visualization
+* DAX → Metric calculation
 
 ---
 
-##  Data Extraction (SQL)
+##  Repository Structure
 
-### 1. Event-Level Funnel Data
-
-```sql
-SELECT
-  device.deviceCategory,
-  trafficSource.source,
-  COUNTIF(hits.eCommerceAction.action_type = 2) AS product_view,
-  COUNTIF(hits.eCommerceAction.action_type = 3) AS add_to_cart,
-  COUNTIF(hits.eCommerceAction.action_type = 5) AS checkout,
-  COUNTIF(hits.eCommerceAction.action_type = 6) AS purchase
-FROM
-  `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
-  UNNEST(hits) AS hits
-WHERE
-  _TABLE_SUFFIX BETWEEN '20160801' AND '20160916'
-GROUP BY device.deviceCategory, trafficSource.source
+```bash
+├── data/
+│   ├── funnel_overall.csv
+│   ├── funnel_device.csv
+│   └── funnel_source.csv
+│
+├── sql/
+│   ├── funnel_overall.sql
+│   ├── funnel_device.sql
+│   └── funnel_source.sql
+│
+├── dashboard/
+│   └── ecommerce_funnel_analysis.pbix
+│
+├── images/
+│   ├── funnel.png
+│   ├── device.png
+│   └── source.png
+│
+└── README.md
 ```
 
 ---
 
 ## Dashboard Preview
 
-### 🔹 Funnel Overview
+### Funnel Overview
 
 ![Funnel](images/funnel.png)
 
-### 🔹 Device Analysis
+### Device Analysis
 
 ![Device](images/device.png)
 
-### 🔹 Source Analysis
+### Source Analysis
 
 ![Source](images/source.png)
 
 ---
 
-## Dashboard Structure
+## Data Modeling Approach (SQL)
+
+Raw event-level data is transformed into **user-level funnel behavior** to ensure accurate conversion measurement.
+
+### Key Technique:
+
+* `MAX()` → flag user actions
+* `COUNTIF()` → aggregate funnel stages
+* Avoids double-counting across sessions
 
 ---
 
-### Page 1 — Funnel Overview
+### Example Logic
 
-* Funnel: Product View → Add to Cart → Checkout → Purchase
-* KPIs:
-
-  * Total Users (~16K)
-  * Purchases (~1.4K)
-  * Conversion Rate (~8.8%)
-
-**Insight:**
-
-> ~63% of users drop before checkout, indicating friction in early funnel stages.
-
----
-
-### Page 2 — Device Analysis
-
-* Metric: Cart → Checkout Conversion
-
-```DAX
-Cart_to_Checkout = checkout / add_to_cart
+```sql
+MAX(CASE WHEN hits.eCommerceAction.action_type = '3' THEN 1 ELSE 0 END) AS add_to_cart
 ```
 
-**Insight:**
+---
 
-> Mobile conversion (~18%) is significantly lower than desktop (~41%), indicating UX friction in checkout flow.
+## Analysis Breakdown
 
 ---
 
-### Page 3 — Source Analysis
+### 1. Funnel Performance
 
-* Combo Chart:
+* Product View → Add to Cart → Checkout → Purchase
 
-  * Bars → Conversion Rate
-  * Line → Purchase Volume
+**Finding:**
 
-**Insight:**
-
-> Direct traffic converts ~2.5× better than Google, highlighting differences in user intent and traffic quality.
+> ~63% of users drop before checkout → early-stage friction is the primary bottleneck
 
 ---
 
-## Key Insights
+### 2. Device-Level Conversion
 
-### 1. Funnel Drop-Off
+* Desktop: ~41%
+* Mobile: ~18%
 
-* ~63% users drop before checkout
-* Indicates friction in product/cart stage
+**Finding:**
 
----
-
-### 2. Device-Level Friction
-
-* Mobile underperforms significantly
-* Conversion gap: Desktop vs Mobile
+> Mobile users face significant friction during checkout
 
 ---
 
-### 3. Traffic Quality Gap
+### 3. Traffic Source Efficiency
 
-* Google → high traffic, low conversion
-* Direct → lower traffic, high conversion
+* Direct: ~14% conversion
+* Google: ~6% conversion
 
----
+**Finding:**
 
-## 🧩 Business Case Framework
-
----
-
-### Problem
-
-Despite strong traffic, conversion remains low (~8.8%), indicating inefficiencies in user journey and acquisition strategy.
+> High traffic ≠ high value — Google traffic is inefficient
 
 ---
 
-### Root Causes
+##  Key Insights
 
-1. Early funnel friction
-2. Mobile UX inefficiencies
-3. Low-quality traffic from acquisition channels
+* Conversion loss occurs early in the funnel
+* Mobile UX is a major constraint
+* Traffic quality varies significantly by source
 
 ---
 
-### Recommendations
+##  Business Diagnosis
 
-#### 1. Improve Mobile Checkout
+The problem is not lack of users — it is **inefficient conversion of existing demand**.
 
-* Simplify forms
+---
+
+## Strategic Recommendations
+
+### 1. Fix Mobile Checkout (Highest Impact)
+
 * Reduce steps
+* Simplify forms
 * Improve load speed
 
 ---
 
-#### 2. Optimize Early Funnel
+### 2. Optimize Early Funnel
 
-* Improve product clarity
-* Enhance CTA visibility
-* Reduce decision friction
+* Improve product page clarity
+* Strengthen call-to-action
+* Reduce cognitive load
 
 ---
 
-#### 3. Improve Traffic Quality
+### 3. Improve Acquisition Efficiency
 
 * Optimize Google targeting
-* Improve landing pages
-* Focus on high-intent channels
+* Align landing pages with intent
+* Prioritize high-intent traffic
 
 ---
 
-##  Business Impact
+## Expected Impact
 
-* Potential 20–30% uplift in conversion rate
+* 20–30% increase in conversion rate
 * Improved marketing ROI
-* Revenue growth without increasing traffic
+* Revenue growth without additional traffic
 
 ---
 
 ## Key Takeaway
 
-> **Improving conversion efficiency is a more powerful growth lever than increasing traffic volume.**
+> **Conversion optimization is a higher-leverage growth strategy than increasing traffic volume.**
 
 ---
 
-## 📎 How to Reproduce
+## How to Reproduce
 
 1. Run SQL queries in BigQuery
 2. Export results as CSV
 3. Load into Power BI
-4. Build visuals and measures
+4. Build dashboard
 
 ---
 
-## 👤 Author
+##  Author
 
-**Sahil Narula**
+Sahil Narula
 
 ---
+
